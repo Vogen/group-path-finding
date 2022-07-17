@@ -83,20 +83,14 @@ class MyGame(arcade.Window):
         """
         if len(FORMATION_LIST) == 0: return
 
-        cx_avg = sum([s.center_x for s in self.character_sprite_list]) / len(self.character_sprite_list)
-        cy_avg = sum([s.center_y for s in self.character_sprite_list]) / len(self.character_sprite_list)
-
         head_index = int((FORMATION_LIST[0] - 1) / 2)
         self.head_target = self.target_sprite_list[head_index]
 
         # calc target rotation
-        character_center_x, character_center_y = cx_avg, cy_avg
-        if self.head_character:
-            character_center_x = self.head_character.center_x
-            character_center_y = self.head_character.center_y
-
-        dx = x - character_center_x
-        dy = y - character_center_y
+        cx_avg = sum([s.center_x for s in self.character_sprite_list]) / len(self.character_sprite_list)
+        cy_avg = sum([s.center_y for s in self.character_sprite_list]) / len(self.character_sprite_list)
+        dx = x - cx_avg
+        dy = y - cy_avg
         d = pow(pow(dx, 2) + pow(dy, 2), 0.5)
         sin_theta = dy / d
         cos_theta = dx / d
