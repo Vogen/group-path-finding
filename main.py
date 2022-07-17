@@ -8,7 +8,8 @@ CHARACTER_SPRITE_RADIUS = 10
 TARGET_SPRITE_RADIUS = 5
 HEAD_SPRITE_RADIUS = 5
 FORMATION_PADDING = 30
-FORMATION_LIST = [5, 5]
+FORMATION_LIST = [15]
+# FORMATION_LIST = [5, 5, 5]
 # FORMATION_LIST = [1, 2, 3, 4, 5]
 CHARACTER_NUM = sum(FORMATION_LIST)
 CHARACTER_SPEED = 50
@@ -83,8 +84,17 @@ class MyGame(arcade.Window):
         """
         if len(FORMATION_LIST) == 0: return
 
+        # find head
         head_index = int((FORMATION_LIST[0] - 1) / 2)
         self.head_target = self.target_sprite_list[head_index]
+        self.head_target.center_x = x
+        self.head_target.center_y = y
+        character_list = [c for c in self.character_sprite_list]
+        def d2h(s): return pow(s.center_x - self.head_target.center_x, 2) + pow(s.center_y - self.head_target.center_y, 2)
+        character_list.sort(key=d2h)
+
+        self.head_character = character_list[0]
+        self.move_dict[self.head_character] = self.head_target
 
         # calc target rotation
         cx_avg = sum([s.center_x for s in self.character_sprite_list]) / len(self.character_sprite_list)
@@ -112,15 +122,11 @@ class MyGame(arcade.Window):
         ty_avg = sum([s.center_y for s in self.target_sprite_list]) / len(self.target_sprite_list)
 
         # Assign Target
-        start  = [[s.center_x - cx_avg, s.center_y - cy_avg, s] for s in self.character_sprite_list]
-        target = [[s.center_x - tx_avg, s.center_y - ty_avg, s] for s in self.target_sprite_list]
+        start  = [[s.center_x - cx_avg, s.center_y - cy_avg, s] for s in self.character_sprite_list if not s == self.head_character]
+        target = [[s.center_x - tx_avg, s.center_y - ty_avg, s] for s in self.target_sprite_list if not s == self.head_target]
         solver = Solver()
         match, cost = solver.solve(start, target)
-        for _, e in match.items():
-            self.move_dict[e.s.v] = e.t.v
-            if e.t.v == self.head_target:
-                self.head_character = e.s.v
-
+        for _, e in match.items(): self.move_dict[e.s.v] = e.t.v
 
     def on_update(self, delta_time):
         """ Movement and game logic """
@@ -134,8 +140,8 @@ class MyGame(arcade.Window):
             
             # use relative target
             if not character == self.head_character:
-                tx += self.head_character.center_x - self.head_target.center_x
-                ty += self.head_character.center_y - self.head_target.center_y
+                tx -= self.head_target.center_x - self.head_character.center_x
+                ty -= self.head_target.center_y - self.head_character.center_y
 
             dx, dy = tx - cx, ty - cy
             d = pow(pow(dx, 2) + pow(dy, 2), 0.5)
@@ -145,10 +151,8 @@ class MyGame(arcade.Window):
                     character.center_x = tx
                     character.center_y = ty
                 else:
-                    fx, fy = dx / d, dy / d
-                    mx, my = fx * step, fy * step
-                    character.center_x += mx
-                    character.center_y += my
+                    character.center_x += dx / d * step
+                    character.center_y += dy / d * step
 
         if self.head_character:
             self.head_sprite.center_x = self.head_character.center_x
