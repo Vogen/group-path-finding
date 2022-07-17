@@ -131,6 +131,12 @@ class MyGame(arcade.Window):
         for character, target in self.move_dict.items():
             cx, cy = character.center_x, character.center_y
             tx, ty = target.center_x, target.center_y
+            
+            # use relative target
+            if not character == self.head_character:
+                tx += self.head_character.center_x - self.head_target.center_x
+                ty += self.head_character.center_y - self.head_target.center_y
+
             dx, dy = tx - cx, ty - cy
             d = pow(pow(dx, 2) + pow(dy, 2), 0.5)
             if d > 1:
