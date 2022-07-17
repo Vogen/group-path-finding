@@ -87,14 +87,6 @@ class MyGame(arcade.Window):
         # find head
         head_index = int((FORMATION_LIST[0] - 1) / 2)
         self.head_target = self.target_sprite_list[head_index]
-        self.head_target.center_x = x
-        self.head_target.center_y = y
-        character_list = [c for c in self.character_sprite_list]
-        def d2h(s): return pow(s.center_x - self.head_target.center_x, 2) + pow(s.center_y - self.head_target.center_y, 2)
-        character_list.sort(key=d2h)
-
-        self.head_character = character_list[0]
-        self.move_dict[self.head_character] = self.head_target
 
         # calc target rotation
         cx_avg = sum([s.center_x for s in self.character_sprite_list]) / len(self.character_sprite_list)
@@ -113,20 +105,47 @@ class MyGame(arcade.Window):
                 dx = (j - c) * FORMATION_PADDING
                 dy = (  - i) * FORMATION_PADDING
 
-                target = self.target_sprite_list[target_index]
+                target = self.target_sprite_list[target_index + j]
                 target.center_x = x + sin_theta * dx + cos_theta * dy
                 target.center_y = y - cos_theta * dx + sin_theta * dy
-                target_index += 1
 
-        tx_avg = sum([s.center_x for s in self.target_sprite_list]) / len(self.target_sprite_list)
-        ty_avg = sum([s.center_y for s in self.target_sprite_list]) / len(self.target_sprite_list)
+            target_index += n
 
         # Assign Target
-        start  = [[s.center_x - cx_avg, s.center_y - cy_avg, s] for s in self.character_sprite_list if not s == self.head_character]
-        target = [[s.center_x - tx_avg, s.center_y - ty_avg, s] for s in self.target_sprite_list if not s == self.head_target]
+        start  = []
+        target_index = 0
+        for i, n in enumerate(FORMATION_LIST):
+            c = int((n - 1) / 2)
+
+            print()
+            js = []
+            if n % 2 == 0:
+                print('--')
+                c = (n + 1) / 2
+                for j in range(int(c)):
+                    js.append(c - j - 1.5)
+                    js.append(c + j - 0.5)
+            else:
+                c = (n - 1) / 2
+                js = [c]
+                for j in range(int(c)):
+                    js.append(c - j - 1)
+                    js.append(c + j + 1)
+
+            for j in js:
+                print(j)
+                target = self.target_sprite_list[target_index + int(j)]
+                start.append([target.center_x, target.center_y, target])
+
+            target_index += n
+        
+        target  = [[s.center_x, s.center_y, s] for s in self.character_sprite_list]
         solver = Solver()
         match, cost = solver.solve(start, target)
-        for _, e in match.items(): self.move_dict[e.s.v] = e.t.v
+        for _, e in match.items():
+            self.move_dict[e.t.v] = e.s.v
+            if e.s.v == self.head_target:
+                self.head_character = e.t.v
 
     def on_update(self, delta_time):
         """ Movement and game logic """

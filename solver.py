@@ -56,7 +56,7 @@ class Solver():
         cost = max(e.v for t, e in self.match.items())
 
         # extend
-        for _ in range(100):
+        for _ in range(0):
             res = self.match.copy()
 
             for s in s_nodes: 
